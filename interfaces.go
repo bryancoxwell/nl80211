@@ -2,23 +2,23 @@ package nl80211
 
 import (
 	"net"
-	
-	"golang.org/x/sys/unix"
-	"github.com/mdlayher/netlink"
+
 	"github.com/mdlayher/genetlink"
+	"github.com/mdlayher/netlink"
+	"golang.org/x/sys/unix"
 )
 
-type Interface struct {
+type InterfaceInfo struct {
 	Index uint32
 	Name string
 	WiphyIndex uint32
-	Type int
+	IfType int
 	Mac net.HardwareAddr
 	WiphyFreq uint32
 }
 
-func InterfaceFromNetlinkMessage(msg genetlink.Message) (Interface, error) {
-	ifi := Interface{}
+func InterfaceFromNetlinkMessage(msg genetlink.Message) (InterfaceInfo, error) {
+	ifi := InterfaceInfo{}
 	ad, err := netlink.NewAttributeDecoder(msg.Data)
 	if err != nil {
 		return ifi, err
@@ -32,7 +32,7 @@ func InterfaceFromNetlinkMessage(msg genetlink.Message) (Interface, error) {
 		case unix.NL80211_ATTR_WIPHY:
 			ifi.WiphyIndex = ad.Uint32()
 		case unix.NL80211_ATTR_IFTYPE:
-			ifi.Type = int(ad.Uint32())
+			ifi.IfType = int(ad.Uint32())
 		case unix.NL80211_ATTR_MAC:
 			ifi.Mac = ad.Bytes()
 		case unix.NL80211_ATTR_WIPHY_FREQ:

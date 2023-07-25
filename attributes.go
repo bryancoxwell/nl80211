@@ -1,6 +1,7 @@
 package nl80211
 
 import (
+	"fmt"
 	"net"
 
 	"github.com/mdlayher/netlink"
@@ -100,8 +101,8 @@ func SetAttrIfname(ifname string) Nl80211AttributeSetter {
 }
 
 // SetAttrIftype returns a function that takes a netlink.AttributeEncoder and calls its Uint32 method with the given value and the NL80211_ATTR_IFTYPE attribute type.
-func SetAttrIftype(iftype int) Nl80211AttributeSetter {
-	return AttributeSetter[uint32](unix.NL80211_ATTR_IFTYPE, uint32(iftype))
+func SetAttrIftype(iftype uint32) Nl80211AttributeSetter {
+	return AttributeSetter[uint32](unix.NL80211_ATTR_IFTYPE, iftype)
 }
 
 // SetAttrMac returns a function that takes a netlink.AttributeEncoder and calls its Bytes method with the given value and the NL80211_ATTR_MAC attribute type.
@@ -117,4 +118,43 @@ func SetAttrBeaconInterval(beaconInterval uint32) Nl80211AttributeSetter {
 // SetAttrWiphyFreq returns a function that takes a netlink.AttributeEncoder and calls its Uint32 method with the given value and the NL80211_ATTR_WIPHY_FREQ attribute type.
 func SetAttrWiphyFreq(freq uint32) Nl80211AttributeSetter {
 	return AttributeSetter[uint32](unix.NL80211_ATTR_WIPHY_FREQ, freq)
+}
+
+// SetAttrWiphyChannelType returns a function that takes a netlink.AttributeEncoder and calls its Uint32 method with the given value and the NL80211_ATTR_WIPHY_CHANNEL_TYPE attribute type.
+func SetAttrWiphyChannelType(channelType uint32) Nl80211AttributeSetter {
+	return AttributeSetter[uint32](unix.NL80211_ATTR_WIPHY_CHANNEL_TYPE, channelType)
+}
+
+// GetAttrById returns the value of the attribute with the given ID as the given type.
+func GetAttrById[T AttributeType](ad *netlink.AttributeDecoder, id int) (T, error) {
+	var value T
+	for ad.Next() {
+		if ad.Type() == uint16(id) {
+			switch any(value).(type) {
+			case []byte:
+				return any(ad.Bytes()).(T), nil
+			case bool:
+				return any(ad.Flag()).(T), nil
+			case int8:
+				return any(ad.Int8()).(T), nil
+			case int16:
+				return any(ad.Int16()).(T), nil
+			case int32:
+				return any(ad.Int32()).(T), nil
+			case int64:
+				return any(ad.Int64()).(T), nil
+			case uint8:
+				return any(ad.Uint8()).(T), nil
+			case uint16:
+				return any(ad.Uint16()).(T), nil
+			case uint32:
+				return any(ad.Uint32()).(T), nil
+			case uint64:
+				return any(ad.Uint64()).(T), nil
+			case string:
+				return any(ad.String()).(T), nil
+			}
+		}
+	}
+	return value, fmt.Errorf("attribute %d not found", id)
 }
